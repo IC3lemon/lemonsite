@@ -2,7 +2,7 @@
   "name": "vite_react_shadcn_ts",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://IC3lemon.github.io/lemonsite/",
+  "homepage": "https://ic3lemon.github.io/lemonsite/",
   "type": "module",
   "scripts": {
     "predeploy":"npm run build",
