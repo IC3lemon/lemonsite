@@ -15,6 +15,7 @@ import bgVideo from "@/assets/gehahahah.mp4";
 // import bgImage from "@/assets/46c317ed3ce7c0d1d040a7f1e8337ed5.jpg"
 // import bgImage from "@/assets/3bcd40b870532fede99ca01fb61d34f3.jpg"
 import bgImage from "@/assets/foru.jpg"
+import resumeUrl from "@/assets/resume.pdf?url"
 
 
 // import bgImage from "@/assets/banner.jpg"
@@ -29,7 +30,7 @@ const sections: Record<string, React.ReactNode> = {
 
 const VALID_SECTIONS = ["home", "projects", "blog", "about", "contact"];
 
-const parseCommand = (input: string): { tab?: string; error?: string } => {
+const parseCommand = (input: string): { tab?: string; error?: string; download?: boolean } => {
   const trimmed = input.trim().toLowerCase();
 
   const normalMatch = trimmed.match(/^cd\s+\/([a-z]*)$/);
@@ -68,6 +69,9 @@ const parseCommand = (input: string): { tab?: string; error?: string } => {
     return { error: `uhh, try \`ls ~\` instead` };
   }
 
+  // get resume
+  if (trimmed === "get resume") return { download: true };
+
   // unknown command
   const cmd = trimmed.split(" ")[0];
   if (cmd === "cd") return {error: `cd: ${trimmed.split(" ")[1]}: nuh uh, can't go there. try \`ls ~\``}
@@ -101,7 +105,13 @@ const Index = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       const result = parseCommand(inputValue);
-      if (result.tab) {
+      if (result.download) {
+        const a = document.createElement("a");
+        a.href = resumeUrl;
+        a.download = "madhav_menon_resume.pdf";
+        a.click();
+        setErrorMsg("downloading resume...");
+      } else if (result.tab) {
         setActiveTab(result.tab);
         setErrorMsg(null);
       } else if (result.error) {
