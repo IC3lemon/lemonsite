@@ -155,7 +155,7 @@ const Index = ({ bgOverride, setBgOverride, bgOpacity, setBgOpacity, bgFontSize,
 
       } else if (result.resolution !== undefined) {
         setBgFontSize(result.resolution);
-        setErrorMsg(`resolution set to ${result.resolution} (lower = sharper)`);
+        setErrorMsg(`resolution set to ${result.resolution}`);
 
       } else if (result.tab) {
         setActiveTab(result.tab);

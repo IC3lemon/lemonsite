@@ -6,7 +6,7 @@ interface HeroSectionProps {
 }
 
 const HeroSection = ({ nowPlaying = "\"penguin\"" }: HeroSectionProps) => {
-  const lastUpdated = new Date("2026-03-19T20:19:30");
+  const lastUpdated = new Date("2026-03-20T00:48:30");
 
   const formatTimeAgo = (date: Date) => {
     const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
