@@ -1,33 +1,10 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { blogPosts } from "@/content/blog";
 
-const posts = [
-  {
-    title: "Windows shellcoding",
-    date: "2026-03-19",
-    excerpt: "So much more of a pain than linux shellcoding. Also not frequently documented sadly.",
-    tags: ["cybersecurity", "reverse engineering"],
-  },
-  {
-    title: "Anti-debugging with nanomites, and lotta other stuff",
-    date: "2026-02-22",
-    excerpt: "Implementation and testing of various anti debugging techniques, including a lot from https://anti-debug.checkpoint.com/.",
-    tags: ["cybersecurity", "reverse engineering"],
-  },
-  {
-    title: "OpenGL",
-    date: "2026-03-15",
-    excerpt: "Learning and hating how to draw the same goddamn triangle.",
-    tags: ["graphics","OpenGL", "GLSL", "C++"],
-  },
-  {
-    title: "LLL",
-    date: "2026-01-15",
-    excerpt: "Lattice reduction, more like black magic tbh.",
-    tags: ["sagemath", "Python"],
-  }
-];
 
 const BlogSection = () => {
+  const navigate = useNavigate();
   return (
     <section className="py-12">
       <h2 className="text-3xl md:text-4xl font-mono font-bold tracking-tighter mb-2">
@@ -38,13 +15,14 @@ const BlogSection = () => {
       </p>
 
       <div className="space-y-0">
-        {posts.map((post, index) => (
+        {blogPosts.map((post, index) => (
           <motion.article
-            key={post.title}
+            key={post.slug}
             className="border-b-2 border-foreground py-6 group cursor-pointer"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1, duration: 0.4 }}
+            onClick={() => navigate(`/blog/${post.slug}`)}
           >
             <div className="flex flex-col md:flex-row md:items-start gap-4">
               <div className="flex-1">

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import TabNav from "@/components/TabNav";
 import HeroSection from "@/components/HeroSection";
 import ProjectsSection from "@/components/ProjectsSection";
@@ -74,12 +75,22 @@ const parseCommand = (input: string): { tab?: string; error?: string } => {
 };
 
 const Index = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("home");
   const [inputValue, setInputValue] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const state = location.state as { tab?: string } | null;
+    if (state?.tab && VALID_SECTIONS.includes(state.tab)) {
+      setActiveTab(state.tab);
+      // Clear the state so refreshing doesn't re-trigger
+      window.history.replaceState({}, "");
+    }
+  }, [location.state]);
+  
   // Clear error after 2.5s
   useEffect(() => {
     if (!errorMsg) return;

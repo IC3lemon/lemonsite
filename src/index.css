@@ -48,8 +48,24 @@
 }
 
 @layer base {
-  * {
+  /* Apply border color globally but never inside code/pre */
+  *:not(pre, pre *, code, code *) {
     @apply border-border;
+  }
+
+  /* Hard reset: kill all borders inside syntax highlighter */
+  pre, pre *,
+  code *:not(.prose-sketchy :not(pre) > code),
+  .code-block-inner,
+  .code-block-inner * {
+    border: none !important;
+    border-top: none !important;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-style: none !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
   }
 
   body {
@@ -141,4 +157,86 @@
   background-repeat: repeat-x;
   background-size: 100px 8px;
   padding-bottom: 4px;
+}
+
+/* Markdown prose styling for blog posts */
+.prose-sketchy {
+  @apply text-foreground font-body leading-relaxed;
+}
+.prose-sketchy h1 {
+  @apply text-3xl md:text-4xl font-mono font-bold tracking-tighter mb-6 mt-0;
+}
+.prose-sketchy h2 {
+  @apply text-2xl md:text-3xl font-mono font-bold tracking-tighter mb-4 mt-10 border-b-2 border-foreground pb-2;
+}
+.prose-sketchy h3 {
+  @apply text-xl font-mono font-bold tracking-tight mb-3 mt-8;
+}
+.prose-sketchy p {
+  @apply mb-4 text-sm md:text-base;
+}
+/* Links: blue, no underline by default, underline on hover */
+.prose-sketchy a {
+  color: hsl(var(--accent));
+  text-decoration: none;
+}
+.prose-sketchy a:hover {
+  text-decoration: underline;
+}
+/* Inline code inside links should also be blue */
+.prose-sketchy a code {
+  color: hsl(var(--accent)) !important;
+}
+.prose-sketchy ul,
+.prose-sketchy ol {
+  @apply mb-4 pl-6;
+}
+.prose-sketchy ul {
+  @apply list-disc;
+}
+.prose-sketchy ol {
+  @apply list-decimal;
+}
+.prose-sketchy li {
+  @apply mb-1 text-sm md:text-base;
+}
+.prose-sketchy blockquote {
+  @apply border-l-4 border-accent pl-4 italic text-muted-foreground my-4;
+}
+.prose-sketchy code {
+  @apply font-mono text-xs md:text-sm;
+}
+/* Inline code (not inside a pre block) */
+.prose-sketchy :not(pre) > code {
+  @apply bg-secondary px-1.5 py-0.5 text-foreground;
+  border: 1px solid hsl(var(--border)) !important;
+  border-style: solid !important;
+}
+.prose-sketchy hr {
+  @apply border-t-2 border-foreground my-8;
+}
+.prose-sketchy em {
+  @apply font-hand text-accent not-italic text-sm;
+}
+.prose-sketchy strong {
+  @apply font-bold text-foreground;
+}
+.prose-sketchy img {
+  @apply border-2 border-foreground my-6;
+  box-shadow: 3px 3px 0px 0px hsl(var(--border));
+}
+
+/* Ordered list counters */
+.prose-sketchy ol {
+  counter-reset: sketchy-ol;
+}
+.prose-sketchy ol > li {
+  counter-increment: sketchy-ol;
+}
+.prose-sketchy ol > li > span:first-child::before {
+  content: counter(sketchy-ol) ".";
+  color: hsl(var(--accent));
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.75rem;
 }
