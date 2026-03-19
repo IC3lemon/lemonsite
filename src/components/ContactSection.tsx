@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useForm, ValidationError } from "@formspree/react";
 
 const socials = [
   {
@@ -45,6 +46,8 @@ const socials = [
 ];
 
 const ContactSection = () => {
+  const [state, handleSubmit] = useForm("xlgpzjvq");
+
   return (
     <section className="py-12">
       <h2 className="text-3xl md:text-4xl font-mono font-bold tracking-tighter mb-2">
@@ -64,43 +67,67 @@ const ContactSection = () => {
           className="border-2 border-foreground p-6 bg-background"
           style={{ boxShadow: "4px 4px 0px 0px hsl(var(--border))" }}
         >
-          <div className="space-y-4">
-            <div>
-              <label className="font-mono text-xs font-bold block mb-1">char* name</label>
-              <input
-                type="text"
-                className="w-full border-2 border-foreground px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                style={{ background: "transparent" }}
-                placeholder="your_name"
-              />
+          {state.succeeded ? (
+            <div className="flex flex-col gap-2 py-4">
+              <p className="font-mono text-sm font-bold text-foreground">message_sent() ✓</p>
+              <p className="font-mono text-xs text-muted-foreground">// i'll get back to you soon</p>
             </div>
-            <div>
-              <label className="font-mono text-xs font-bold block mb-1">char* email</label>
-              <input
-                type="text"
-                className="w-full border-2 border-foreground px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                style={{ background: "transparent" }}
-                placeholder="you@domain.tld"
-              />
-            </div>
-            <div>
-              <label className="font-mono text-xs font-bold block mb-1">char* message</label>
-              <textarea
-                rows={5}
-                className="w-full border-2 border-foreground bg-backgroud px-3 py-2 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent"
-                placeholder="// write your message here..."
-              />
-            </div>
-            <motion.button
-              className="border-2 border-foreground bg-foreground text-primary-foreground px-6 py-2.5 font-mono text-sm font-bold tracking-tight cursor-pointer"
-              whileHover={{ x: -2, y: -2, boxShadow: "5px 5px 0px 0px hsl(var(--border))" }}
-              whileTap={{ x: 2, y: 2, boxShadow: "1px 1px 0px 0px hsl(var(--border))" }}
-              transition={{ type: "spring", stiffness: 400, damping: 15 }}
-              style={{ boxShadow: "3px 3px 0px 0px hsl(var(--border))" }}
-            >
-              send_message()
-            </motion.button>
-          </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="name" className="font-mono text-xs font-bold block mb-1">char* name</label>
+                <input
+                  id="name"
+                  type="text"
+                  name="name"
+                  required
+                  className="w-full border-2 border-foreground px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  style={{ background: "transparent" }}
+                  placeholder="your_name"
+                />
+                <ValidationError prefix="Name" field="name" errors={state.errors} className="font-mono text-xs text-destructive mt-1" />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="font-mono text-xs font-bold block mb-1">char* email</label>
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  required
+                  className="w-full border-2 border-foreground px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  style={{ background: "transparent" }}
+                  placeholder="you@domain.tld"
+                />
+                <ValidationError prefix="Email" field="email" errors={state.errors} className="font-mono text-xs text-destructive mt-1" />
+              </div>
+
+              <div>
+                <label htmlFor="message" className="font-mono text-xs font-bold block mb-1">char* message</label>
+                <textarea
+                  id="message"
+                  name="message"
+                  required
+                  rows={5}
+                  className="w-full border-2 border-foreground bg-background px-3 py-2 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent"
+                  placeholder="// write your message here..."
+                />
+                <ValidationError prefix="Message" field="message" errors={state.errors} className="font-mono text-xs text-destructive mt-1" />
+              </div>
+
+              <motion.button
+                type="submit"
+                disabled={state.submitting}
+                className="border-2 border-foreground bg-foreground text-primary-foreground px-6 py-2.5 font-mono text-sm font-bold tracking-tight cursor-pointer disabled:opacity-50"
+                whileHover={{ x: -2, y: -2, boxShadow: "5px 5px 0px 0px hsl(var(--border))" }}
+                whileTap={{ x: 2, y: 2, boxShadow: "1px 1px 0px 0px hsl(var(--border))" }}
+                transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                style={{ boxShadow: "3px 3px 0px 0px hsl(var(--border))" }}
+              >
+                {state.submitting ? "sending..." : "send_message()"}
+              </motion.button>
+            </form>
+          )}
         </motion.div>
 
         {/* ── SOCIALS ── */}
