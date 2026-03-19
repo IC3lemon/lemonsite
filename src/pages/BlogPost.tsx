@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { blogPosts, loadPostContent } from "@/content/blog";
 import AsciiBackground from "@/components/AsciiBackground";
 import type { BgOverride } from "@/App";
-import bgImage from "@/assets/foru.jpg";
+import bgImage from "@/assets/penguin.jpg";
 
 const imageModules = import.meta.glob("@/content/blog/*.{png,jpg,jpeg,gif,webp,svg}", {
   eager: true,
