@@ -155,9 +155,11 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         };
 
         // Local /public paths are same-origin — load directly
+        // Prepend BASE_URL so paths like /penguin.jpg work on GitHub Pages subpaths
         // External URLs — fetch as blob to sidestep canvas CORS taint
         if (!imageUrl.startsWith('http')) {
-            loadImg(imageUrl);
+            const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+            loadImg(`${base}${imageUrl}`);
         } else {
             fetch(imageUrl)
                 .then(r => {

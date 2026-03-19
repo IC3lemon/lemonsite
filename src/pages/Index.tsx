@@ -9,7 +9,7 @@ import AboutSection from "@/components/AboutSection";
 import ContactSection from "@/components/ContactSection";
 import AsciiBackground from "@/components/AsciiBackground";
 import type { BgOverride } from "@/App";
-import bgImage from "@/assets/foru.jpg";
+import bgImage from "@/assets/penguin.jpg";
 import resumeUrl from "@/assets/resume.pdf?url";
 
 const makeSections = (nowPlaying: string): Record<string, React.ReactNode> => ({
@@ -163,7 +163,7 @@ const Index = ({ bgOverride, setBgOverride, bgOpacity, setBgOpacity }: IndexProp
 
   const nowPlaying = bgOverride
     ? `"${bgOverride.url.split("/").pop() ?? bgOverride.url}"`
-    : '"penguin"';
+    : '"penguin.jpg"';
 
   const sections = makeSections(nowPlaying);
 
