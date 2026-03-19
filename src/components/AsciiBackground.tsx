@@ -224,7 +224,15 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
     return (
         <>
             {videoUrl && (
-                <video ref={videoRef} src={videoUrl} muted loop playsInline style={{ display: 'none' }} />
+                <video
+                    ref={videoRef}
+                    src={
+                        !videoUrl.startsWith('http') && !videoUrl.includes('/assets/')
+                            ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}${videoUrl}`
+                            : videoUrl
+                    }
+                    muted loop playsInline style={{ display: 'none' }}
+                />
             )}
             <canvas ref={samplerCanvasRef} style={{ display: 'none' }} />
             <canvas
