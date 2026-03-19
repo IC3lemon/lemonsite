@@ -17,5 +17,6 @@ export default defineConfig(({ command }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // base: command === "build" ? "/lemonsite/" : "/",
+  // GitHub Pages project sites are served from /<repo-name>/.
+  base: command === "build" ? "/lemonsite/" : "/",
 }));
