@@ -6,9 +6,10 @@ interface ProjectCardProps {
   tags: string[];
   address: string;
   category: "low-level" | "animation" | "cybersec" | "gamedev";
+  url?: string;
 }
 
-const ProjectCard = ({ title, description, tags, address, category }: ProjectCardProps) => {
+const ProjectCard = ({ title, description, tags, address, category, url }: ProjectCardProps) => {
   const categoryColors: Record<string, string> = {
     "low-level": "bg-foreground text-primary-foreground",
     animation: "bg-accent text-accent-foreground",
@@ -18,7 +19,7 @@ const ProjectCard = ({ title, description, tags, address, category }: ProjectCar
 
   return (
     <motion.div
-      className="relative p-6 border-2 border-foreground bg-card"
+      className={`relative p-6 border-2 border-foreground bg-card group ${url ? "cursor-pointer" : "cursor-default"}`}
       style={{ boxShadow: "4px 4px 0px 0px hsl(var(--border))" }}
       whileHover={{
         boxShadow: "0px 0px 0px 0px hsl(var(--border))",
@@ -26,6 +27,7 @@ const ProjectCard = ({ title, description, tags, address, category }: ProjectCar
         y: 2,
       }}
       transition={{ type: "spring", stiffness: 400, damping: 15 }}
+      onClick={() => url && window.open(url, "_blank", "noopener,noreferrer")}
     >
       <div
         className={`absolute -top-3 -left-2 px-2 py-1 text-xs font-mono ${categoryColors[category]}`}
@@ -33,6 +35,11 @@ const ProjectCard = ({ title, description, tags, address, category }: ProjectCar
       >
         {address}
       </div>
+      {url && (
+        <span className="absolute top-3 right-4 font-mono text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          ↗ github
+        </span>
+      )}
       <h3 className="text-xl font-mono font-bold mt-2 tracking-tight">{title}</h3>
       <p className="text-sm text-muted-foreground mt-2 font-body">{description}</p>
       <div className="mt-4 flex flex-wrap gap-2">

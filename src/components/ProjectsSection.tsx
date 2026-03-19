@@ -17,6 +17,7 @@ const projects = [
     tags: ["Typescript", "Java", "WebGPU", "GLSL"],
     address: "0x0002",
     category: "animation" as const,
+    url: "https://github.com/IC3lemon/inkspire",
   },
   {
     title: "Wishcode [ongoing]",
@@ -45,6 +46,7 @@ const projects = [
     tags: ["syzkaller", "C++", "Python", "Linux", "kernel"],
     address: "0x0006",
     category: "low-level" as const,
+    url: "https://github.com/IC3lemon/fuzzez",
   },
   {
     title: "Cryptobible",
@@ -52,8 +54,8 @@ const projects = [
     tags: ["Python", "Sagemath"],
     address: "0x0007",
     category: "cybersec" as const,
+    url: "https://github.com/IC3lemon/cryptobible",
   },
-  
 ];
 
 type Filter = "all" | "low-level" | "animation" | "cybersec" | "gamedev";
