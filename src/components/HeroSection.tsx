@@ -1,14 +1,15 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-const HeroSection = () => {
-  const lastUpdated = new Date("2026-03-19T16:48:30"); // update this when you deploy
-  const FPS = 16;
-  const NOW_PLAYING = "\"Guy with bouquet\"";
+interface HeroSectionProps {
+  nowPlaying?: string;
+}
+
+const HeroSection = ({ nowPlaying = "\"penguin\"" }: HeroSectionProps) => {
+  const lastUpdated = new Date("2026-03-19T20:19:30");
 
   const formatTimeAgo = (date: Date) => {
     const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-
     if (seconds < 60) return "just now";
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
@@ -21,7 +22,6 @@ const HeroSection = () => {
     const interval = setInterval(() => {
       setTimeAgo(formatTimeAgo(lastUpdated));
     }, 60000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -39,7 +39,6 @@ const HeroSection = () => {
           </span>
         </h1>
 
-        {/* Terminal line */}
         <div className="mt-6 flex items-center gap-2 font-mono text-sm text-muted-foreground">
           <motion.span
             animate={{ opacity: [1, 0.5, 1] }}
@@ -51,7 +50,6 @@ const HeroSection = () => {
           <span>I like bread and all things tech.</span>
         </div>
 
-        {/* Tags */}
         <div className="mt-8 flex flex-wrap gap-3 font-mono text-xs">
           {[
             "cybersecurity",
@@ -75,21 +73,14 @@ const HeroSection = () => {
           ))}
         </div>
 
-        {/* System stats */}
         <div className="mt-10 font-mono text-xs text-muted-foreground flex flex-wrap gap-6">
           <span>
             Last Update:{" "}
             <span className="text-foreground">{timeAgo}</span>
           </span>
-
-          {/* <span>
-            FPS:{" "}
-            <span className="text-foreground">{FPS} </span>
-          </span> */}
-
           <span>
             In the bg:{" "}
-            <span className="text-foreground italic">{NOW_PLAYING}</span>
+            <span className="text-foreground italic">{nowPlaying}</span>
           </span>
         </div>
       </motion.div>

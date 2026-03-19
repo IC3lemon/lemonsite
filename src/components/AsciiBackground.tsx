@@ -5,14 +5,12 @@ interface AsciiBackgroundProps {
     videoUrl?: string;
     opacity?: number;
     fontSize?: number;
-    /** Number of palette buckets per channel. Total colors = paletteSteps^3. Default 4 → 64 colors. */
     paletteSteps?: number;
 }
 
 const CHARSET = " `.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@"
     .split('').reverse().join('');
 
-/** Quantize an 0-255 channel value to the nearest palette step */
 const quantize = (v: number, steps: number): number => {
     const bucket = Math.round((v / 255) * (steps - 1));
     return Math.round((bucket / (steps - 1)) * 255);
@@ -39,6 +37,13 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         charMetrics.current = { w: ctx.measureText('M').width, h: fontSize };
     }, [fontSize]);
 
+    const clearCanvas = useCallback(() => {
+        const canvas = outputCanvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    }, []);
+
     const renderFrame = useCallback((source: HTMLImageElement | HTMLVideoElement) => {
         const outCanvas = outputCanvasRef.current;
         const samplerCanvas = samplerCanvasRef.current;
@@ -64,7 +69,6 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         const srcH = source instanceof HTMLVideoElement ? source.videoHeight : source.height;
         if (!srcW || !srcH) return;
 
-        // Cover scale
         const scale = Math.max(cols / srcW, rows / srcH);
         const scaledW = srcW * scale;
         const scaledH = srcH * scale;
@@ -85,8 +89,6 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         outCtx.font = `${fontSize}px monospace`;
         outCtx.textBaseline = 'top';
 
-        // --- Palette-quantized batching ---
-        // Map: colorKey → array of {x, y, char}
         const batches = new Map<string, { x: number; y: number; char: string }[]>();
 
         for (let row = 0; row < rows; row++) {
@@ -100,7 +102,6 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
                 const char = CHARSET[Math.floor(lum * (CHARSET.length - 1))];
                 if (char === ' ') continue;
 
-                // Quantize to palette
                 const qr = quantize(r, paletteSteps);
                 const qg = quantize(g, paletteSteps);
                 const qb = quantize(b, paletteSteps);
@@ -112,7 +113,6 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
             }
         }
 
-        // One fillStyle set per palette bucket, then draw all chars in that bucket
         for (const [key, batch] of batches) {
             outCtx.fillStyle = `rgb(${key})`;
             for (const { x, y, char } of batch) {
@@ -123,20 +123,61 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
 
     // Image mode
     useEffect(() => {
-        if (!imageUrl) return;
+        // If no imageUrl, clear the canvas so we don't show stale content
+        if (!imageUrl) {
+            clearCanvas();
+            return;
+        }
+
         const outCtx = outputCanvasRef.current?.getContext('2d');
         if (!outCtx) return;
         measureChar(outCtx);
 
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.src = imageUrl;
-        img.onload = () => renderFrame(img);
+        let blobUrl: string | null = null;
+        let cancelled = false;
+        let onResize: (() => void) | null = null;
 
-        const onResize = () => renderFrame(img);
-        window.addEventListener('resize', onResize);
-        return () => window.removeEventListener('resize', onResize);
-    }, [imageUrl, renderFrame, measureChar]);
+        const loadImg = (src: string) => {
+            const img = new Image();
+            img.onload = () => {
+                if (cancelled) return;
+                const canvas = outputCanvasRef.current;
+                if (canvas) {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+                renderFrame(img);
+                onResize = () => renderFrame(img);
+                window.addEventListener('resize', onResize);
+            };
+            img.onerror = () => console.warn('[AsciiBackground] failed to load:', src);
+            img.src = src;
+        };
+
+        // Local /public paths are same-origin — load directly
+        // External URLs — fetch as blob to sidestep canvas CORS taint
+        if (!imageUrl.startsWith('http')) {
+            loadImg(imageUrl);
+        } else {
+            fetch(imageUrl)
+                .then(r => {
+                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                    return r.blob();
+                })
+                .then(blob => {
+                    if (cancelled) return;
+                    blobUrl = URL.createObjectURL(blob);
+                    loadImg(blobUrl);
+                })
+                .catch(e => console.warn('[AsciiBackground] fetch failed:', e));
+        }
+
+        return () => {
+            cancelled = true;
+            if (onResize) window.removeEventListener('resize', onResize);
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+        };
+    }, [imageUrl, renderFrame, measureChar, clearCanvas]);
 
     // Video mode
     useEffect(() => {

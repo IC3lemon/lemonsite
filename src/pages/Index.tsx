@@ -8,29 +8,30 @@ import BlogSection from "@/components/BlogSection";
 import AboutSection from "@/components/AboutSection";
 import ContactSection from "@/components/ContactSection";
 import AsciiBackground from "@/components/AsciiBackground";
-import bgVideo from "@/assets/gehahahah.mp4";
-// import bgVideo from "@/assets/chainsaw.mp4";
-// import bgImage from "@/assets/d4b5703ff0b80ef2b9e7e2ab024b4809.jpg"
-// import bgImage from "@/assets/IC3lemon.png"
-// import bgImage from "@/assets/46c317ed3ce7c0d1d040a7f1e8337ed5.jpg"
-// import bgImage from "@/assets/3bcd40b870532fede99ca01fb61d34f3.jpg"
-import bgImage from "@/assets/foru.jpg"
-import resumeUrl from "@/assets/resume.pdf?url"
+import type { BgOverride } from "@/App";
+import bgImage from "@/assets/foru.jpg";
+import resumeUrl from "@/assets/resume.pdf?url";
 
-
-// import bgImage from "@/assets/banner.jpg"
-
-const sections: Record<string, React.ReactNode> = {
-  home: <HeroSection />,
+const makeSections = (nowPlaying: string): Record<string, React.ReactNode> => ({
+  home: <HeroSection nowPlaying={nowPlaying} />,
   projects: <ProjectsSection />,
   blog: <BlogSection />,
   about: <AboutSection />,
   contact: <ContactSection />,
-};
+});
 
 const VALID_SECTIONS = ["home", "projects", "blog", "about", "contact"];
 
-const parseCommand = (input: string): { tab?: string; error?: string; download?: boolean } => {
+type CommandResult = {
+  tab?: string;
+  error?: string;
+  download?: boolean;
+  play?: string;
+  stop?: boolean;
+  opacity?: number;
+};
+
+const parseCommand = (input: string): CommandResult => {
   const trimmed = input.trim().toLowerCase();
 
   const normalMatch = trimmed.match(/^cd\s+\/([a-z]*)$/);
@@ -54,31 +55,41 @@ const parseCommand = (input: string): { tab?: string; error?: string; download?:
     return { error: `cd: ${dotdotMatch[1]}: nuh uh, can't go there. try \`ls ~\`` };
   }
 
-  // cd .. → go home
   if (trimmed === "cd ..") return { tab: "home" };
-
-  // cd alone → go home
   if (trimmed === "cd") return { tab: "home" };
 
-  // ls → list sections
-  if (trimmed === "ls ~") {
-    return { error: `home  projects  blog  about  contact` };
-  }
+  if (trimmed === "ls ~") return { error: "home  projects  blog  about  contact" };
+  if (trimmed === "ls") return { error: "uhh, try `ls ~` instead" };
 
-  if (trimmed === "ls") {
-    return { error: `uhh, try \`ls ~\` instead` };
-  }
-
-  // get resume
   if (trimmed === "get resume") return { download: true };
 
-  // unknown command
+  const playMatch = trimmed.match(/^play\s+((?:https?:\/\/|\/)\S+)$/);
+  if (playMatch) return { play: playMatch[1] };
+
+  if (trimmed === "stop") return { stop: true };
+
+  const opacityMatch = trimmed.match(/^opacity\s+([0-9]*\.?[0-9]+)$/);
+  if (opacityMatch) {
+    const val = parseFloat(opacityMatch[1]);
+    if (val < 0 || val > 1) return { error: "opacity: value must be between 0 and 1" };
+    return { opacity: val };
+  }
+
   const cmd = trimmed.split(" ")[0];
-  if (cmd === "cd") return {error: `cd: ${trimmed.split(" ")[1]}: nuh uh, can't go there. try \`ls ~\``}
+  if (cmd === "cd") return { error: `cd: ${trimmed.split(" ")[1]}: nuh uh, can't go there. try \`ls ~\`` };
   return { error: `${cmd}: command not found` };
 };
 
-const Index = () => {
+const CORS_BLOCKED = /pinterest\.|instagram\.|facebook\.|gstatic\.com|imgur\.com/i;
+
+interface IndexProps {
+  bgOverride: BgOverride;
+  setBgOverride: (v: BgOverride) => void;
+  bgOpacity: number;
+  setBgOpacity: (v: number) => void;
+}
+
+const Index = ({ bgOverride, setBgOverride, bgOpacity, setBgOpacity }: IndexProps) => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("home");
   const [inputValue, setInputValue] = useState("");
@@ -90,12 +101,10 @@ const Index = () => {
     const state = location.state as { tab?: string } | null;
     if (state?.tab && VALID_SECTIONS.includes(state.tab)) {
       setActiveTab(state.tab);
-      // Clear the state so refreshing doesn't re-trigger
       window.history.replaceState({}, "");
     }
   }, [location.state]);
-  
-  // Clear error after 2.5s
+
   useEffect(() => {
     if (!errorMsg) return;
     const t = setTimeout(() => setErrorMsg(null), 2500);
@@ -105,20 +114,44 @@ const Index = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       const result = parseCommand(inputValue);
+
       if (result.download) {
         const a = document.createElement("a");
         a.href = resumeUrl;
         a.download = "madhav_menon_resume.pdf";
         a.click();
         setErrorMsg("downloading resume...");
+
+      } else if (result.stop) {
+        setBgOverride(null);
+        setErrorMsg("background reset");
+
+      } else if (result.play) {
+        const url = result.play;
+        const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(url);
+        const isLocal = url.startsWith("/");
+        if (!isLocal && CORS_BLOCKED.test(url)) {
+          setErrorMsg("err: that host blocks cross-origin. use /public paths e.g. play /cat.jpg");
+        } else {
+          setBgOverride({ url, type: isVideo ? "video" : "image" });
+          setErrorMsg(`playing ${isVideo ? "video" : "image"}...`);
+        }
+
+      } else if (result.opacity !== undefined) {
+        setBgOpacity(result.opacity);
+        setErrorMsg(`opacity set to ${result.opacity}`);
+
       } else if (result.tab) {
         setActiveTab(result.tab);
         setErrorMsg(null);
+
       } else if (result.error) {
         setErrorMsg(result.error);
       }
+
       setInputValue("");
     }
+
     if (e.key === "Escape") {
       setInputValue("");
       setErrorMsg(null);
@@ -128,15 +161,27 @@ const Index = () => {
 
   const focusInput = () => inputRef.current?.focus();
 
+  const nowPlaying = bgOverride
+    ? `"${bgOverride.url.split("/").pop() ?? bgOverride.url}"`
+    : '"penguin"';
+
+  const sections = makeSections(nowPlaying);
+
+  const asciiBgImage = bgOverride?.type === "image" ? bgOverride.url : bgOverride ? undefined : bgImage;
+  const asciiBgVideo = bgOverride?.type === "video" ? bgOverride.url : undefined;
+
   return (
     <div className="min-h-screen">
-      <AsciiBackground imageUrl={bgImage} opacity={0.7} />
+      <AsciiBackground
+        imageUrl={asciiBgImage}
+        videoUrl={asciiBgVideo}
+        opacity={bgOpacity}
+      />
       <div className="max-w-6xl mx-auto px-6 relative z-10">
-        {/* Header */}
+
         <header className="pt-8 pb-6 border-b-2 border-foreground">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-            {/* Terminal prompt */}
             <div
               className="font-mono text-xs text-muted-foreground cursor-text flex flex-col gap-0.5"
               onClick={focusInput}
@@ -147,7 +192,6 @@ const Index = () => {
                 <span>~/{activeTab}</span>
                 <span className="text-accent mx-1">$</span>
 
-                {/* Invisible but real input */}
                 <span className="relative flex items-center">
                   <input
                     ref={inputRef}
@@ -166,9 +210,7 @@ const Index = () => {
                     autoCorrect="off"
                     aria-label="terminal input"
                   />
-                  {/* Visual display of typed text */}
                   <span className="text-foreground">{inputValue}</span>
-                  {/* Blinking cursor */}
                   {isFocused
                     ? <span className="animate-cursor-blink ml-0.5 text-foreground">▌</span>
                     : inputValue === "" && <span className="animate-cursor-blink ml-0.5">▌</span>
@@ -176,7 +218,6 @@ const Index = () => {
                 </span>
               </div>
 
-              {/* Error / output line */}
               <AnimatePresence>
                 {errorMsg && (
                   <motion.span
@@ -195,7 +236,6 @@ const Index = () => {
           </div>
         </header>
 
-        {/* Content */}
         <AnimatePresence mode="wait">
           <motion.main
             key={activeTab}
@@ -208,7 +248,6 @@ const Index = () => {
           </motion.main>
         </AnimatePresence>
 
-        {/* Footer */}
         <footer className="border-t-2 border-foreground py-6 mt-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 font-mono text-xs text-muted-foreground">
             <span>© 2026 Madhav Menon. Some rights reserved.</span>
