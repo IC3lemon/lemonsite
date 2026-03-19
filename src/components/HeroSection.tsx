@@ -59,7 +59,7 @@ const HeroSection = () => {
             "game dev",
             "reverse engineering",
             "low-level",
-            "graphics programming",
+            "cryptography"
           ].map((tag) => (
             <motion.span
               key={tag}
