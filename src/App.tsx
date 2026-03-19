@@ -15,6 +15,7 @@ export type BgOverride = { url: string; type: "image" | "video" } | null;
 const App = () => {
   const [bgOverride, setBgOverride] = useState<BgOverride>(null);
   const [bgOpacity, setBgOpacity] = useState(0.2);
+  const [bgFontSize, setBgFontSize] = useState(5);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -31,6 +32,8 @@ const App = () => {
                   setBgOverride={setBgOverride}
                   bgOpacity={bgOpacity}
                   setBgOpacity={setBgOpacity}
+                  bgFontSize={bgFontSize}
+                  setBgFontSize={setBgFontSize}
                 />
               }
             />
@@ -40,6 +43,7 @@ const App = () => {
                 <BlogPostPage
                   bgOverride={bgOverride}
                   bgOpacity={bgOpacity}
+                  bgFontSize={bgFontSize}
                 />
               }
             />

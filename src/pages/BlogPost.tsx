@@ -21,7 +21,6 @@ function resolveImage(src: string): string {
   return match ? match[1] : src;
 }
 
-// Token color map
 const TOKEN_COLORS: Record<string, string> = {
   comment: "#888888",
   prolog: "#888888",
@@ -149,9 +148,10 @@ function CodeBlock({ language, children }: { language: string; children: string 
 interface BlogPostPageProps {
   bgOverride: BgOverride;
   bgOpacity: number;
+  bgFontSize: number;
 }
 
-const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
+const BlogPostPage = ({ bgOverride, bgOpacity, bgFontSize }: BlogPostPageProps) => {
   const asciiBgImage = bgOverride?.type === "image" ? bgOverride.url : bgOverride ? undefined : bgImage;
   const asciiBgVideo = bgOverride?.type === "video" ? bgOverride.url : undefined;
 
@@ -174,7 +174,7 @@ const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
   if (!post) {
     return (
       <div className="min-h-screen">
-        <AsciiBackground imageUrl={asciiBgImage} videoUrl={asciiBgVideo} opacity={bgOpacity} />
+        <AsciiBackground imageUrl={asciiBgImage} videoUrl={asciiBgVideo} opacity={bgOpacity} fontSize={bgFontSize} />
         <div className="max-w-3xl mx-auto px-6 py-20 relative z-10">
           <p className="font-mono text-destructive">404 — post not found</p>
           <button
@@ -190,7 +190,7 @@ const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
 
   return (
     <div className="min-h-screen">
-      <AsciiBackground imageUrl={asciiBgImage} videoUrl={asciiBgVideo} opacity={bgOpacity} />
+      <AsciiBackground imageUrl={asciiBgImage} videoUrl={asciiBgVideo} opacity={bgOpacity} fontSize={bgFontSize} />
       <div className="max-w-3xl mx-auto px-6 relative z-10">
 
         <header className="pt-8 pb-6 border-b-2 border-foreground">

@@ -22,18 +22,20 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
     imageUrl,
     videoUrl,
     opacity = 0.5,
-    fontSize = 11,
+    fontSize = 5,
     paletteSteps = 4,
 }) => {
     const outputCanvasRef = useRef<HTMLCanvasElement>(null);
     const samplerCanvasRef = useRef<HTMLCanvasElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
-    const rafRef = useRef<number | null>(null);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const charMetrics = useRef({ w: fontSize * 0.6, h: fontSize });
 
     const measureChar = useCallback((ctx: CanvasRenderingContext2D) => {
-        ctx.font = `${fontSize}px monospace`;
-        charMetrics.current = { w: ctx.measureText('M').width, h: fontSize };
+        const dpr = window.devicePixelRatio || 1;
+        const scaledSize = fontSize * dpr;
+        ctx.font = `${scaledSize}px monospace`;
+        charMetrics.current = { w: ctx.measureText('M').width, h: scaledSize };
     }, [fontSize]);
 
     const clearCanvas = useCallback(() => {
@@ -52,9 +54,11 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         const samplerCtx = samplerCanvas.getContext('2d', { willReadFrequently: true });
         if (!outCtx || !samplerCtx) return;
 
+        const dpr = window.devicePixelRatio || 1;
         const { w: charW, h: charH } = charMetrics.current;
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
+
+        const vw = window.innerWidth * dpr;
+        const vh = window.innerHeight * dpr;
 
         if (outCanvas.width !== vw || outCanvas.height !== vh) {
             outCanvas.width = vw;
@@ -85,7 +89,7 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         const { data: pixels } = samplerCtx.getImageData(0, 0, cols, rows);
 
         outCtx.clearRect(0, 0, vw, vh);
-        outCtx.font = `${fontSize}px monospace`;
+        outCtx.font = `${fontSize * dpr}px monospace`;
         outCtx.textBaseline = 'top';
 
         const batches = new Map<string, { x: number; y: number; char: string }[]>();
@@ -120,9 +124,8 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         }
     }, [fontSize, paletteSteps]);
 
-    // Image mode
+    // Image mode — renders once on load, again on resize
     useEffect(() => {
-        // If no imageUrl, clear the canvas so we don't show stale content
         if (!imageUrl) {
             clearCanvas();
             return;
@@ -141,22 +144,22 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
             img.onload = () => {
                 if (cancelled) return;
                 const canvas = outputCanvasRef.current;
+                const dpr = window.devicePixelRatio || 1;
                 if (canvas) {
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
+                    canvas.width = window.innerWidth * dpr;
+                    canvas.height = window.innerHeight * dpr;
                 }
                 renderFrame(img);
-                onResize = () => renderFrame(img);
+                onResize = () => {
+                    measureChar(outCtx);
+                    renderFrame(img);
+                };
                 window.addEventListener('resize', onResize);
             };
             img.onerror = () => console.warn('[AsciiBackground] failed to load:', src);
             img.src = src;
         };
 
-        // Local /public paths are same-origin — load directly
-        // Only prepend BASE_URL for user-supplied /public paths (play command).
-        // Vite-imported assets already have the correct hashed path — don't touch them.
-        // External URLs — fetch as blob to sidestep canvas CORS taint
         if (!imageUrl.startsWith('http')) {
             const isViteAsset = imageUrl.includes('/assets/');
             const base = isViteAsset ? '' : import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -182,7 +185,8 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         };
     }, [imageUrl, renderFrame, measureChar, clearCanvas]);
 
-    // Video mode
+    // Video mode — uses setTimeout instead of rAF so it doesn't compete
+    // with React's animation frames during page transitions
     useEffect(() => {
         if (!videoUrl || !videoRef.current) return;
         const video = videoRef.current;
@@ -190,21 +194,26 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         if (!outCtx) return;
         measureChar(outCtx);
 
+        // 12fps — low enough to not fight React animations, still looks decent
+        const FRAME_MS = 1000 / 12;
         let running = false;
 
-        const loop = () => {
+        const tick = () => {
             if (!running) return;
-            renderFrame(video);
-            rafRef.current = requestAnimationFrame(loop);
+            // Skip render if tab is hidden — saves a ton of CPU
+            if (!document.hidden) {
+                renderFrame(video);
+            }
+            timerRef.current = setTimeout(tick, FRAME_MS);
         };
 
         const onPlay = () => {
             running = true;
-            loop();
+            tick();
         };
         const onPause = () => {
             running = false;
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            if (timerRef.current) clearTimeout(timerRef.current);
         };
 
         video.addEventListener('play', onPlay);
@@ -214,7 +223,7 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
 
         return () => {
             running = false;
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            if (timerRef.current) clearTimeout(timerRef.current);
             video.removeEventListener('play', onPlay);
             video.removeEventListener('pause', onPause);
             video.removeEventListener('ended', onPause);
@@ -246,7 +255,6 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
                     opacity,
                 }}
             />
-
         </>
     );
 };

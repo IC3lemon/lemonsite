@@ -29,6 +29,7 @@ type CommandResult = {
   play?: string;
   stop?: boolean;
   opacity?: number;
+  resolution?: number;
 };
 
 const parseCommand = (input: string): CommandResult => {
@@ -75,6 +76,13 @@ const parseCommand = (input: string): CommandResult => {
     return { opacity: val };
   }
 
+  const resMatch = trimmed.match(/^resolution\s+([0-9]*\.?[0-9]+)$/);
+  if (resMatch) {
+    const val = parseFloat(resMatch[1]);
+    if (val < 1 || val > 20) return { error: "resolution: value must be between 1 (sharpest) and 20 (lowest)" };
+    return { resolution: val };
+  }
+
   const cmd = trimmed.split(" ")[0];
   if (cmd === "cd") return { error: `cd: ${trimmed.split(" ")[1]}: nuh uh, can't go there. try \`ls ~\`` };
   return { error: `${cmd}: command not found` };
@@ -87,9 +95,11 @@ interface IndexProps {
   setBgOverride: (v: BgOverride) => void;
   bgOpacity: number;
   setBgOpacity: (v: number) => void;
+  bgFontSize: number;
+  setBgFontSize: (v: number) => void;
 }
 
-const Index = ({ bgOverride, setBgOverride, bgOpacity, setBgOpacity }: IndexProps) => {
+const Index = ({ bgOverride, setBgOverride, bgOpacity, setBgOpacity, bgFontSize, setBgFontSize }: IndexProps) => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("home");
   const [inputValue, setInputValue] = useState("");
@@ -124,6 +134,7 @@ const Index = ({ bgOverride, setBgOverride, bgOpacity, setBgOpacity }: IndexProp
 
       } else if (result.stop) {
         setBgOverride(null);
+        setBgFontSize(5);
         setErrorMsg("background reset");
 
       } else if (result.play) {
@@ -134,12 +145,17 @@ const Index = ({ bgOverride, setBgOverride, bgOpacity, setBgOpacity }: IndexProp
           setErrorMsg("err: that host blocks cross-origin. use /public paths e.g. play /cat.jpg");
         } else {
           setBgOverride({ url, type: isVideo ? "video" : "image" });
+          setBgFontSize(isVideo ? 12 : 5);
           setErrorMsg(`playing ${isVideo ? "video" : "image"}...`);
         }
 
       } else if (result.opacity !== undefined) {
         setBgOpacity(result.opacity);
         setErrorMsg(`opacity set to ${result.opacity}`);
+
+      } else if (result.resolution !== undefined) {
+        setBgFontSize(result.resolution);
+        setErrorMsg(`resolution set to ${result.resolution} (lower = sharper)`);
 
       } else if (result.tab) {
         setActiveTab(result.tab);
@@ -176,6 +192,7 @@ const Index = ({ bgOverride, setBgOverride, bgOpacity, setBgOpacity }: IndexProp
         imageUrl={asciiBgImage}
         videoUrl={asciiBgVideo}
         opacity={bgOpacity}
+        fontSize={bgFontSize}
       />
       <div className="max-w-6xl mx-auto px-6 relative z-10">
 
