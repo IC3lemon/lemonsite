@@ -109,7 +109,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <AsciiBackground videoUrl={bgVideo} opacity={0.7} />
+      <AsciiBackground imageUrl={bgImage} opacity={0.7} />
       <div className="max-w-6xl mx-auto px-6 relative z-10">
         {/* Header */}
         <header className="pt-8 pb-6 border-b-2 border-foreground">
