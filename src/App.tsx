@@ -14,7 +14,7 @@ export type BgOverride = { url: string; type: "image" | "video" } | null;
 
 const App = () => {
   const [bgOverride, setBgOverride] = useState<BgOverride>(null);
-  const [bgOpacity, setBgOpacity] = useState(0.2);
+  const [bgOpacity, setBgOpacity] = useState(0.5);
   const [bgFontSize, setBgFontSize] = useState(5);
 
   return (
