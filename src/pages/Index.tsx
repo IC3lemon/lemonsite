@@ -7,8 +7,8 @@ import BlogSection from "@/components/BlogSection";
 import AboutSection from "@/components/AboutSection";
 import ContactSection from "@/components/ContactSection";
 import AsciiBackground from "@/components/AsciiBackground";
-// import bgVideo from "@/assets/gehahahah.mp4";
-import bgVideo from "@/assets/chainsaw.mp4";
+import bgVideo from "@/assets/gehahahah.mp4";
+// import bgVideo from "@/assets/chainsaw.mp4";
 // import bgImage from "@/assets/d4b5703ff0b80ef2b9e7e2ab024b4809.jpg"
 // import bgImage from "@/assets/IC3lemon.png"
 // import bgImage from "@/assets/46c317ed3ce7c0d1d040a7f1e8337ed5.jpg"
@@ -109,7 +109,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <AsciiBackground imageUrl={bgImage} opacity={0.7} />
+      <AsciiBackground videoUrl={bgVideo} opacity={0.7} />
       <div className="max-w-6xl mx-auto px-6 relative z-10">
         {/* Header */}
         <header className="pt-8 pb-6 border-b-2 border-foreground">
