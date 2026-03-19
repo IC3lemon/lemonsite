@@ -15,7 +15,7 @@ const achievements = [
   {
     date: "2025-12",
     title: "Finalist - Smart India Hackathon 2025",
-    desc: "Selected to participate for onsite finals of SIH '25 @ IIT Jammu. Lead a team of six members to build an LLVM based binary obfuscator for PS-25236 submitted by NTRO.",
+    desc: "Selected to participate for onsite finals of SIH '25 @ IIT Jammu. Lead a team of six members to build an LLVM based binary obfuscator for PS-25236.",
   },
   {
     date: "2025-01",
@@ -194,12 +194,12 @@ const AboutSection = () => {
             </h3>
             <div>
               {[
-                {
-                  date: "May 2026 — Aug 2026",
-                  title: "Research Intern",
-                  org: "NTRO (National Technical Research Organisation)",
-                  desc: "",
-                },
+                // {
+                //   date: "May 2026 — Aug 2026",
+                //   title: "Upcoming Research Intern",
+                //   org: "NTRO (National Technical Research Organisation)",
+                //   desc: "",
+                // },
                 {
                   date: "Aug 2025 — May 2026",
                   title: "Cryptography Head x Executive Board",

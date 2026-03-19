@@ -2,9 +2,9 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 const HeroSection = () => {
-  const lastUpdated = new Date("2025-02-18T21:35:00"); // update this when you deploy
+  const lastUpdated = new Date("2026-03-19T14:11:18"); // update this when you deploy
   const FPS = 16;
-  const NOW_PLAYING = "\"Aki with bouquet\"";
+  const NOW_PLAYING = "\"Guy with bouquet\"";
 
   const formatTimeAgo = (date: Date) => {
     const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
