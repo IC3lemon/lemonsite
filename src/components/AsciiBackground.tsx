@@ -29,7 +29,6 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
     const samplerCanvasRef = useRef<HTMLCanvasElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const rafRef = useRef<number | null>(null);
-    const playBtnRef = useRef<HTMLButtonElement>(null);
     const charMetrics = useRef({ w: fontSize * 0.6, h: fontSize });
 
     const measureChar = useCallback((ctx: CanvasRenderingContext2D) => {
@@ -155,10 +154,12 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         };
 
         // Local /public paths are same-origin — load directly
-        // Prepend BASE_URL so paths like /penguin.jpg work on GitHub Pages subpaths
+        // Only prepend BASE_URL for user-supplied /public paths (play command).
+        // Vite-imported assets already have the correct hashed path — don't touch them.
         // External URLs — fetch as blob to sidestep canvas CORS taint
         if (!imageUrl.startsWith('http')) {
-            const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+            const isViteAsset = imageUrl.includes('/assets/');
+            const base = isViteAsset ? '' : import.meta.env.BASE_URL.replace(/\/$/, '');
             loadImg(`${base}${imageUrl}`);
         } else {
             fetch(imageUrl)
@@ -198,7 +199,6 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         };
 
         const onPlay = () => {
-            if (playBtnRef.current) playBtnRef.current.style.display = 'none';
             running = true;
             loop();
         };
@@ -210,9 +210,7 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
         video.addEventListener('play', onPlay);
         video.addEventListener('pause', onPause);
         video.addEventListener('ended', onPause);
-        video.play().catch(() => {
-            if (playBtnRef.current) playBtnRef.current.style.display = 'block';
-        });
+        video.play().catch(() => {});
 
         return () => {
             running = false;
@@ -240,22 +238,7 @@ const AsciiBackground: React.FC<AsciiBackgroundProps> = ({
                     opacity,
                 }}
             />
-            <button
-                ref={playBtnRef}
-                onClick={() => videoRef.current?.play()}
-                style={{
-                    display: 'none',
-                    position: 'fixed',
-                    top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 10,
-                    padding: '10px 20px',
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                }}
-            >
-                ▶ Play
-            </button>
+
         </>
     );
 };

@@ -3,14 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { refractor } from "refractor/all";
 import { motion } from "framer-motion";
 import { blogPosts, loadPostContent } from "@/content/blog";
 import AsciiBackground from "@/components/AsciiBackground";
 import type { BgOverride } from "@/App";
 import bgImage from "@/assets/foru.jpg";
 
-// Eagerly import all images from the blog content folder
 const imageModules = import.meta.glob("@/content/blog/*.{png,jpg,jpeg,gif,webp,svg}", {
   eager: true,
   import: "default",
@@ -22,53 +21,73 @@ function resolveImage(src: string): string {
   return match ? match[1] : src;
 }
 
-// Sketchy light theme matching your site palette
-const sketchyTheme: Record<string, React.CSSProperties> = {
-  'code[class*="language-"]': {
-    color: "#1a1a1a",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "0.8rem",
-    lineHeight: "1.6",
-    background: "none",
-  },
-  'pre[class*="language-"]': {
-    background: "none",
-    margin: 0,
-    padding: 0,
-    overflow: "auto",
-  },
-  comment:    { color: "#888888", fontStyle: "italic" },
-  prolog:     { color: "#888888" },
-  doctype:    { color: "#888888" },
-  cdata:      { color: "#888888" },
-  punctuation:{ color: "#555555" },
-  property:   { color: "#0070f3" },
-  tag:        { color: "#0070f3" },
-  boolean:    { color: "#0070f3" },
-  number:     { color: "#0070f3" },
-  constant:   { color: "#0070f3" },
-  symbol:     { color: "#0070f3" },
-  deleted:    { color: "#e00000" },
-  selector:   { color: "#22863a" },
-  "attr-name":{ color: "#22863a" },
-  string:     { color: "#22863a" },
-  char:       { color: "#22863a" },
-  builtin:    { color: "#22863a" },
-  inserted:   { color: "#22863a" },
-  operator:   { color: "#555555" },
-  entity:     { color: "#555555" },
-  url:        { color: "#0070f3" },
-  keyword:    { color: "#d73a49", fontWeight: "600" },
-  atrule:     { color: "#d73a49" },
-  "attr-value":{ color: "#22863a" },
-  function:   { color: "#6f42c1" },
-  "class-name":{ color: "#6f42c1" },
-  regex:      { color: "#e36209" },
-  important:  { color: "#e36209", fontWeight: "bold" },
-  variable:   { color: "#e36209" },
-  bold:       { fontWeight: "bold" },
-  italic:     { fontStyle: "italic" },
+// Token color map
+const TOKEN_COLORS: Record<string, string> = {
+  comment: "#888888",
+  prolog: "#888888",
+  doctype: "#888888",
+  cdata: "#888888",
+  punctuation: "#555555",
+  property: "#0070f3",
+  tag: "#0070f3",
+  boolean: "#0070f3",
+  number: "#0070f3",
+  constant: "#0070f3",
+  symbol: "#0070f3",
+  deleted: "#e00000",
+  selector: "#22863a",
+  "attr-name": "#22863a",
+  string: "#22863a",
+  char: "#22863a",
+  builtin: "#22863a",
+  inserted: "#22863a",
+  operator: "#555555",
+  entity: "#555555",
+  url: "#0070f3",
+  keyword: "#d73a49",
+  atrule: "#d73a49",
+  "attr-value": "#22863a",
+  function: "#6f42c1",
+  "class-name": "#6f42c1",
+  regex: "#e36209",
+  important: "#e36209",
+  variable: "#e36209",
 };
+
+type RefractorNode = {
+  type: "text" | "element";
+  value?: string;
+  tagName?: string;
+  properties?: { className?: string[] };
+  children?: RefractorNode[];
+};
+
+function renderTokens(nodes: RefractorNode[], parentColor?: string): React.ReactNode[] {
+  return nodes.map((node, i) => {
+    if (node.type === "text") {
+      return parentColor
+        ? <span key={i} style={{ color: parentColor }}>{node.value}</span>
+        : <span key={i}>{node.value}</span>;
+    }
+    const classes = node.properties?.className ?? [];
+    const tokenType = classes.filter((c) => c !== "token").find((c) => TOKEN_COLORS[c]);
+    const color = tokenType ? TOKEN_COLORS[tokenType] : parentColor;
+    const isItalic = tokenType === "comment";
+    const isBold = tokenType === "keyword" || tokenType === "important";
+    return (
+      <span
+        key={i}
+        style={{
+          color: color ?? "inherit",
+          fontStyle: isItalic ? "italic" : undefined,
+          fontWeight: isBold ? "600" : undefined,
+        }}
+      >
+        {node.children ? renderTokens(node.children, color) : null}
+      </span>
+    );
+  });
+}
 
 function CodeBlock({ language, children }: { language: string; children: string }) {
   const [copied, setCopied] = useState(false);
@@ -80,18 +99,24 @@ function CodeBlock({ language, children }: { language: string; children: string 
     });
   };
 
+  let tokens: React.ReactNode[] = [];
+  try {
+    const tree = refractor.highlight(children, language || "text");
+    tokens = renderTokens(tree.children as RefractorNode[]);
+  } catch {
+    tokens = [<span key="raw">{children}</span>];
+  }
+
   return (
     <div
       className="relative group my-6 border-2 border-foreground dithered-bg overflow-x-auto"
       style={{ boxShadow: "3px 3px 0px 0px hsl(var(--border))" }}
     >
-      {/* Language label */}
       {language && (
         <span className="absolute top-2 left-3 font-mono text-xs text-muted-foreground select-none">
           {language}
         </span>
       )}
-      {/* Copy button */}
       <button
         onClick={handleCopy}
         className="absolute top-2 right-2 font-mono text-xs text-muted-foreground border border-border px-2 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:text-foreground hover:border-foreground"
@@ -99,16 +124,24 @@ function CodeBlock({ language, children }: { language: string; children: string 
       >
         {copied ? "copied!" : "copy"}
       </button>
-      <div className={language ? "pt-7 px-4 pb-4" : "p-4"}>
-        <SyntaxHighlighter
-          language={language || "text"}
-          style={sketchyTheme}
-          PreTag="div"
-          customStyle={{ background: "none", margin: 0, padding: 0 }}
+      <pre style={{ margin: 0, padding: 0, background: "none", border: "none", boxShadow: "none", overflow: "visible" }}>
+        <code
+          style={{
+            display: "block",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "0.8rem",
+            lineHeight: "1.6",
+            color: "#1a1a1a",
+            background: "none",
+            border: "none",
+            boxShadow: "none",
+            padding: language ? "2.25rem 1rem 1rem" : "1rem",
+            whiteSpace: "pre",
+          }}
         >
-          {children}
-        </SyntaxHighlighter>
-      </div>
+          {tokens}
+        </code>
+      </pre>
     </div>
   );
 }
@@ -121,6 +154,7 @@ interface BlogPostPageProps {
 const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
   const asciiBgImage = bgOverride?.type === "image" ? bgOverride.url : bgOverride ? undefined : bgImage;
   const asciiBgVideo = bgOverride?.type === "video" ? bgOverride.url : undefined;
+
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [content, setContent] = useState<string | null>(null);
@@ -159,7 +193,6 @@ const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
       <AsciiBackground imageUrl={asciiBgImage} videoUrl={asciiBgVideo} opacity={bgOpacity} />
       <div className="max-w-3xl mx-auto px-6 relative z-10">
 
-        {/* Header bar */}
         <header className="pt-8 pb-6 border-b-2 border-foreground">
           <button
             onClick={() => navigate("/", { state: { tab: "blog" } })}
@@ -175,7 +208,6 @@ const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {/* Meta */}
           <div className="mb-8">
             <span className="font-hand text-accent text-sm">{post.date}</span>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -187,7 +219,6 @@ const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
             </div>
           </div>
 
-          {/* Content */}
           {loading ? (
             <p className="font-mono text-muted-foreground animate-pulse">loading...</p>
           ) : content ? (
@@ -196,25 +227,21 @@ const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeRaw]}
                 components={{
-                  // Code — block or inline
                   code({ className, children }) {
                     const match = /language-(\w+)/.exec(className || "");
                     const codeString = String(children).replace(/\n$/, "");
                     if (match) {
                       return <CodeBlock language={match[1]}>{codeString}</CodeBlock>;
                     }
-                    // Inline code
                     return (
                       <code className="font-mono text-xs md:text-sm bg-secondary px-1.5 py-0.5 border border-border text-foreground">
                         {children}
                       </code>
                     );
                   },
-                  // Suppress default pre wrapper — CodeBlock handles its own
                   pre({ children }) {
                     return <>{children}</>;
                   },
-                  // Images with relative path resolution
                   img({ src, alt }) {
                     const resolved = src ? resolveImage(src) : src;
                     return (
@@ -226,8 +253,6 @@ const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
                       />
                     );
                   },
-                  // Links — accent blue, no underline unless hovered
-                  // inline style used to beat CSS specificity
                   a({ href, children }) {
                     return (
                       <a
@@ -242,7 +267,6 @@ const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
                       </a>
                     );
                   },
-                  // Ordered list
                   ol({ children }) {
                     return (
                       <ol className="mb-4 pl-0 list-none space-y-2" style={{ counterReset: "sketchy-ol" }}>
@@ -250,18 +274,11 @@ const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
                       </ol>
                     );
                   },
-                  // List items
                   li({ children, ordered }: { children?: React.ReactNode; ordered?: boolean }) {
                     if (ordered) {
                       return (
-                        <li
-                          className="flex gap-3 text-sm md:text-base items-baseline"
-                          style={{ counterIncrement: "sketchy-ol" }}
-                        >
-                          <span
-                            className="font-mono font-bold text-xs shrink-0"
-                            style={{ color: "hsl(var(--accent))", minWidth: "1.5rem" }}
-                          />
+                        <li className="flex gap-3 text-sm md:text-base items-baseline" style={{ counterIncrement: "sketchy-ol" }}>
+                          <span className="font-mono font-bold text-xs shrink-0" style={{ color: "hsl(var(--accent))", minWidth: "1.5rem" }} />
                           <span>{children}</span>
                         </li>
                       );
@@ -278,7 +295,6 @@ const BlogPostPage = ({ bgOverride, bgOpacity }: BlogPostPageProps) => {
           )}
         </motion.article>
 
-        {/* Footer */}
         <footer className="border-t-2 border-foreground py-6 mt-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 font-mono text-xs text-muted-foreground">
             <span>© 2026 Madhav Menon. Some rights reserved.</span>
