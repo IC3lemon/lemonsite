@@ -14,7 +14,7 @@ export type BgOverride = { url: string; type: "image" | "video" } | null;
 
 const App = () => {
   const [bgOverride, setBgOverride] = useState<BgOverride>(null);
-  const [bgOpacity, setBgOpacity] = useState(0.5);
+  const [bgOpacity, setBgOpacity] = useState(0.2);
 
   return (
     <QueryClientProvider client={queryClient}>
