@@ -18,5 +18,5 @@ export default defineConfig(({ command }) => ({
     },
   },
   // GitHub Pages project sites are served from /<repo-name>/.
-  base: command === "build" ? "/lemonsite/" : "/",
+  base: "/",
 }));
