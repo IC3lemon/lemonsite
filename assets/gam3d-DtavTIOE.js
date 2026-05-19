@@ -33,27 +33,40 @@ And about the networking stuff....... i'll deal with it when it comes to it. \\
 A few awesome resources I found that I would watch to build a custom engine (probably will refer to these and do so in the future anyways)
 [\`legendary video by an alien\`](https://youtu.be/qjWkNZ0SXfo?si=k3GdIK39oyHHht0G), [\`course style textbook for 3d game arch + gamedev with opengl\`](https://www.openvisionnetworks.com/dist/Game_Programming_in_C++_Creating_3D_Games.pdf), [\`learnopengl.com\`](https://learnopengl.com), [\`3d graphics math primer\`](https://tfetimes.com/wp-content/uploads/2015/04/F.Dunn-I.Parberry-3D-Math-Primer-for-Graphics-and-Game-Development.pdf)
 ### ALL RIGHT, so game plan fr :
-1. setup wasm, raylib, figure out how ur cpp binary translates to working on a fucking browser
+1. setup wasm, raylib, maybe a build script
 2. get a 3d camera fps working
 3. get ur models in
 4. make the rest of the game plan later
 
-## Setting up wasm / emscripten / raylib
+## Checking out raylib
 
-literally just followed the steps at
-https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/C_to_Wasm
-
-
-I setup emsdk on my wsl environment. Following [this](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions-using-the-emsdk-recommended)
-
-now to test if i can get a binary compiled to wasm actually to run on the browser
+raylib honestly is pretty intuitive to use, [this](https://www.raylib.com/cheatsheet/cheatsheet.html) cheatsheet is pretty awesome.
 \`\`\`cpp
-#include <iostream>
-using namespace std;
+#include "raylib.h"
+#include "raymath.h"
 
-int main() {
-    cout << "Hello World!";
+int main(){
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+
+    InitWindow(screenWidth, screenHeight, "mic test 1 2 3");
+    SetTargetFPS(60);
+
+    while(!WindowShouldClose()){
+        BeginDrawing();
+            ClearBackground(RAYWHITE);
+            DrawText("aapke toothpaste me chini hai kya", 190, 200, 20, RED);
+        EndDrawing();
+    }
+
+    CloseWindow();
+
     return 0;
 }
+\`\`\`
 
-\`\`\``;export{e as default};
+\`\`\`py
+for any: A = g**x % p
+x = discrete_log(GF(p)(A), GF(p)(g))
+\`\`\`
+`;export{e as default};
